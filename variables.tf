@@ -5,15 +5,20 @@ variable "AZs" {
 
 variable "Public_CIDRs" {
   type    = list(string)
-  default = ["10.0.0.0/27", "10.0.0.32/27"]
+  default = ["10.0.1.0/24", "10.0.2.0/24"]
 }
 
 variable "Private_CIDRs" {
   type    = list(string)
-  default = ["10.0.0.64/27", "10.0.0.96/27", "10.0.0.128/27", "10.0.0.160/27"]
+  default = ["10.0.3.0/24", "10.0.4.0/24", "10.0.5.0/24", "10.0.6.0/24"]
 }
 
 variable "Subnet_names" {
   type    = list(string)
   default = ["Bastion_subnet", "Nat_subnet", "Application_subnet", "DB_subnet"]
+}
+
+variable "my_ip" {
+  type        = string
+  description = "Allow my SSH"
 }
