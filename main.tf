@@ -181,11 +181,11 @@ resource "aws_launch_template" "app_at" {
 
 resource "aws_autoscaling_group" "app_asg" {
   name_prefix               = "app-asg-"
-  min_size                  = 1
-  max_size                  = 2
-  desired_capacity          = 1
+  min_size                  = 2
+  max_size                  = 4
+  desired_capacity          = 2
   health_check_type         = "EC2"
-  health_check_grace_period = 300
+  health_check_grace_period = 60
   vpc_zone_identifier       = aws_subnet.application_subnets[*].id
 
   launch_template {
@@ -195,6 +195,61 @@ resource "aws_autoscaling_group" "app_asg" {
 
   lifecycle {
     create_before_destroy = true
+  }
+}
+
+resource "aws_autoscaling_policy" "cpu_scaling_policy" {
+  name                   = "cpu-target-tracking-policy"
+  autoscaling_group_name = aws_autoscaling_group.app_asg.name
+  policy_type            = "TargetTrackingScaling"
+
+  target_tracking_configuration {
+    predefined_metric_specification {
+      predefined_metric_type = "ASGAverageCPUUtilization"
+    }
+
+    target_value = 40.0
+  }
+}
+
+resource "aws_iam_role" "ec2_cw_role" {
+  name = "ec2-cloudwatch-agent-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action    = "sts:AssumeRole"
+        Effect    = "Allow"
+        Principal = { Service = "ec2.amazonaws.com" }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "cw_policy_attach" {
+  role       = aws_iam_role.ec2_cw_role.name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+}
+
+resource "aws_iam_instance_profile" "ec2_cw_profile" {
+  name = "ec2-cw-instance-profile"
+  role = aws_iam_role.ec2_cw_role.name
+}
+
+resource "aws_autoscaling_policy" "memory_scaling_policy" {
+  name                   = "memory-target-tracking-policy"
+  autoscaling_group_name = aws_autoscaling_group.app_asg.name
+  policy_type            = "TargetTrackingScaling"
+
+  target_tracking_configuration {
+    customized_metric_specification {
+      metric_name = "mem_used_percent"
+      namespace   = "CWAgent"
+      statistic   = "Average"
+    }
+
+    target_value = 80.0
   }
 }
 
