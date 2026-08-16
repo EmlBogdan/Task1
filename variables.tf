@@ -22,3 +22,11 @@ variable "my_ip" {
   type        = string
   description = "Allow my SSH"
 }
+
+variable "db_username" {
+  type = string
+}
+
+variable "db_password" {
+  type = string
+}
