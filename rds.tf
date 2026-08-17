@@ -28,16 +28,9 @@ resource "aws_security_group" "db_security_group" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "allow_postgres_for_asg" {
+  count             = 4
   security_group_id = aws_security_group.db_security_group.id
-  cidr_ipv4         = "10.0.0.0/16"
-  from_port         = 5432
-  ip_protocol       = "tcp"
-  to_port           = 5432
-}
-
-resource "aws_vpc_security_group_ingress_rule" "allow_postgres_for_admin" {
-  security_group_id = aws_security_group.db_security_group.id
-  cidr_ipv4         = var.my_ip
+  cidr_ipv4         = var.Private_CIDRs[count.index]
   from_port         = 5432
   ip_protocol       = "tcp"
   to_port           = 5432

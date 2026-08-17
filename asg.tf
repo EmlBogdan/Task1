@@ -1,6 +1,6 @@
 resource "aws_launch_template" "app_at" {
   name_prefix            = "app-template-"
-  image_id               = "ami-0230994a6f37f169f"
+  image_id               = "ami-067b421a0a52b1e07"
   instance_type          = "t3.large"
   vpc_security_group_ids = [aws_security_group.apps_sg.id]
   key_name               = aws_key_pair.bastion_key.key_name
