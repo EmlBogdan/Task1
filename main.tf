@@ -5,9 +5,18 @@ terraform {
       version = "~> 5.92"
     }
   }
+  backend "s3" {
+    bucket       = "task-one-backend"
+    key          = "terraform.tfstate"
+    region       = "us-east-1"
+    encrypt      = true
+    use_lockfile = true
+  }
 }
 
-provider "aws" {}
+provider "aws" {
+  profile = "my_account"
+}
 
 resource "aws_key_pair" "bastion_key" {
   key_name   = "bastion_key"
@@ -39,4 +48,5 @@ resource "aws_iam_role_policy_attachment" "cloudwatch_agent_policy_attachment" {
 resource "aws_iam_instance_profile" "cw_role_profile" {
   name = "cw_role_profile"
   role = aws_iam_role.cloudwatch_agent_role.name
+
 }

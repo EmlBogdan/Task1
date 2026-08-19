@@ -3,7 +3,7 @@ resource "aws_vpc" "main_vpc" {
 }
 
 resource "aws_subnet" "public_subnets" {
-  count                   = 2
+  count                   = length(var.Public_CIDRs)
   vpc_id                  = aws_vpc.main_vpc.id
   cidr_block              = var.Public_CIDRs[count.index]
   map_public_ip_on_launch = true
@@ -57,7 +57,7 @@ resource "aws_route_table" "nat_route_table" {
 }
 
 resource "aws_route_table_association" "nat_application_rta" {
-  count          = 2
+  count          = length(var.Private_CIDRs)
   subnet_id      = aws_subnet.application_subnets[count.index].id
   route_table_id = aws_route_table.nat_route_table.id
 }
@@ -75,29 +75,29 @@ resource "aws_default_route_table" "db_route_table" {
 }
 
 resource "aws_route_table_association" "db_iso_rta" {
-  count          = 2
+  count          = length(var.DB_CIDRs)
   subnet_id      = aws_subnet.db_subnet[count.index].id
   route_table_id = aws_default_route_table.db_route_table.id
 }
 
 resource "aws_subnet" "application_subnets" {
-  count             = 2
+  count             = length(var.Private_CIDRs)
   vpc_id            = aws_vpc.main_vpc.id
   cidr_block        = var.Private_CIDRs[count.index]
   availability_zone = var.AZs[count.index]
   tags = {
-    Name = "${var.Subnet_names[2]}_${count.index + 1}"
+    Name = "${var.Application_subnet}_${count.index + 1}"
   }
 }
 
 
 resource "aws_subnet" "db_subnet" {
-  count             = 2
+  count             = length(var.DB_CIDRs)
   vpc_id            = aws_vpc.main_vpc.id
-  cidr_block        = var.Private_CIDRs[count.index + 2]
+  cidr_block        = var.DB_CIDRs[count.index]
   availability_zone = var.AZs[count.index]
   tags = {
-    Name = "${var.Subnet_names[3]}_${count.index + 1}"
+    Name = "${var.DB_subnet}_${count.index + 1}"
   }
 }
 

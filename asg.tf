@@ -1,9 +1,16 @@
 resource "aws_launch_template" "app_at" {
   name_prefix            = "app-template-"
-  image_id               = "ami-067b421a0a52b1e07"
-  instance_type          = "t3.large"
+  image_id               = "ami-0d2aff5bf3ccf067b"
+  instance_type          = "t3.medium"
   vpc_security_group_ids = [aws_security_group.apps_sg.id]
   key_name               = aws_key_pair.bastion_key.key_name
+  user_data = base64encode(
+    <<-EOF
+                              #!/bin/bash
+                              export PGPASSWORD="${aws_db_instance.postgres.password}"
+                              psql -h ${aws_db_instance.postgres.address} -p 5432 -U ${aws_db_instance.postgres.username} -d postgres -c 'CREATE EXTENSION IF NOT EXISTS vector;'
+                              EOF 
+  )
   iam_instance_profile {
     arn = aws_iam_instance_profile.cw_role_profile.arn
   }
@@ -24,6 +31,9 @@ resource "aws_launch_template" "app_at" {
   lifecycle {
     create_before_destroy = true
   }
+
+
+
 }
 
 resource "aws_autoscaling_group" "app_asg" {
@@ -43,6 +53,10 @@ resource "aws_autoscaling_group" "app_asg" {
   lifecycle {
     create_before_destroy = true
   }
+
+  depends_on = [
+    aws_db_instance.postgres
+  ]
 }
 
 resource "aws_autoscaling_policy" "cpu_scaling_policy" {
@@ -101,8 +115,3 @@ resource "aws_vpc_security_group_egress_rule" "allow_all_app_traffic_ipv4" {
   ip_protocol       = "-1"
 }
 
-resource "aws_vpc_security_group_egress_rule" "allow_all_app_traffic_ipv6" {
-  security_group_id = aws_security_group.apps_sg.id
-  cidr_ipv6         = "::/0"
-  ip_protocol       = "-1"
-}
